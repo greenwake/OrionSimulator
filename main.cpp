@@ -13,22 +13,25 @@ int main(int argc, char *argv[])
 
     // 1. Config Yükle
     ConfigManager::instance().loadConfig("config.json");
-    int port = ConfigManager::instance().getSetting("Network", "Port", 12345).toInt();
+    int dataPort = ConfigManager::instance().getSetting("Network", "Port", 12345).toInt();
+    int controlPort = ConfigManager::instance().getSetting("Network", "ControlPort", 12346).toInt(); // YENİ
 
     // 2. Manager'ları Başlat
-    NetworkManager networkManager(port);
+    NetworkManager networkManager(dataPort, controlPort);
     SceneManager sceneManager;
 
     // 3. Sinyal Bağlantısı (TCP -> Scene)
     QObject::connect(&networkManager, &NetworkManager::rawInputReceived,
                      &sceneManager, &SceneManager::handleInput);
 
+    // YENİ BAĞLANTI: NetworkManager'dan gelen oyuncu bilgisini SceneManager'a (oradan QML'e) ilet
+    QObject::connect(&networkManager, &NetworkManager::playerConfigReceived,
+                     &sceneManager, &SceneManager::handlePlayerConfig);
     // 4. QML Başlat
     QQmlApplicationEngine engine;
 
     engine.rootContext()->setContextProperty("sceneManager", &sceneManager);
 
-    // Klasör yapısı değiştiği için URL de değişti:
     const QUrl url(QStringLiteral("qrc:/Orion/src/UI/Main.qml"));
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

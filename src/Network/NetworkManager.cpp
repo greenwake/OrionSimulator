@@ -1,18 +1,19 @@
 #include "NetworkManager.h"
 #include "NetworkService.h"
 
-NetworkManager::NetworkManager(quint16 port, QObject *parent) : QObject(parent) {
+NetworkManager::NetworkManager(quint16 dataPort, quint16 controlPort, QObject *parent) : QObject(parent) {
     workerThread = new QThread(this);
-    worker = new NetworkService(port); // Parent verme, moveToThread yapacağız
-    
+    worker = new NetworkService(dataPort, controlPort); // İki portu da gönderdik
+
     worker->moveToThread(workerThread);
 
-    // Thread sinyalleri
     connect(workerThread, &QThread::started, worker, &NetworkService::startServer);
     connect(workerThread, &QThread::finished, worker, &QObject::deleteLater);
-    
-    // Veri sinyali (Worker -> Manager)
+
     connect(worker, &NetworkService::inputReceived, this, &NetworkManager::rawInputReceived);
+
+    // YENİ EKLENDİ: Kontrol sinyalini dışarı aktar
+    connect(worker, &NetworkService::playerConfigReceived, this, &NetworkManager::playerConfigReceived);
 
     workerThread->start();
 }

@@ -6,9 +6,8 @@
 class ConfigManager : public QObject {
     Q_OBJECT
 public:
-    static ConfigManager& instance(); // Sadece ; var
+    static ConfigManager& instance();
 
-    // Kod gövdesi YOK, sadece noktalı virgül
     void loadConfig(const QString& path);
 
     QVariant getSetting(const QString& group, const QString& key, const QVariant& defaultValue = QVariant()) const;

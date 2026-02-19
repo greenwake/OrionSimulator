@@ -1,6 +1,7 @@
 {
   "Network": {
     "Port": 5555,
+    "ControlPort": 5556,
     "Protocol": "TCP",
     "MaxClients": 1
   },

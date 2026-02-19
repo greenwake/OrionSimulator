@@ -1,11 +1,10 @@
 #pragma once
 #include <QObject>
 #include <QPointF>
+#include <QString>
 
 class IScene : public QObject {
     Q_OBJECT
-    Q_PROPERTY(QString sceneName READ sceneName CONSTANT)
-    Q_PROPERTY(int score READ score NOTIFY scoreChanged)
 
 public:
     explicit IScene(QObject *parent = nullptr) : QObject(parent) {}
@@ -13,21 +12,18 @@ public:
 
     virtual void start() = 0;
     virtual void stop() = 0;
-    virtual void processShot(QPointF normalizedPos) = 0;
 
-    QString sceneName() const { return m_sceneName; }
-    int score() const { return m_score; }
+    // YENİ: Atışı yapan oyuncunun ID'si de geliyor
+    virtual void processShot(int playerId, QPointF normalizedPos) = 0;
 
 signals:
-    void scoreChanged(int newScore);
-    void targetHit(float x, float y, bool isHit);
+    // Sahnenin QML'e ve SceneManager'a göndereceği sinyaller
+    void scoreUpdated(int playerId, int newScore);
+    void targetSpawned(int id, float x, float y, float size, QString color);
+    void targetRemoved(int id, bool wasHit);
 
-protected:
-    QString m_sceneName;
-    int m_score = 0;
-    
-    void setScore(int s) { 
-        m_score = s; 
-        emit scoreChanged(m_score); 
-    }
+    void levelChanged(int newLevel);
+    void roundWinner(int playerId, QString message);
+
+    void gameOver(QVariantMap reportData);
 };
