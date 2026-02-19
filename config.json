@@ -1,0 +1,28 @@
+{
+  "Network": {
+    "Port": 5555,
+    "Protocol": "TCP",
+    "MaxClients": 1
+  },
+  "Display": {
+    "ResolutionX": 1920,
+    "ResolutionY": 1080,
+    "FullScreen": true
+  },
+  "Scenes": {
+    "Reflex": {
+      "MinSpawnTimeMs": 500,
+      "MaxSpawnTimeMs": 1500,
+      "TargetLifeTimeMs": 5000,
+      "Colors": ["#FF0000", "#FFFF00", "#0000FF"]
+    },
+    "Math": {
+      "DifficultyLevel": 1,
+      "Operations": ["+", "*"]
+    },
+    "Target": {
+      "Rings": 5,
+      "Movement": "Static"
+    }
+  }
+}
