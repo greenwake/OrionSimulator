@@ -39,6 +39,8 @@ set(PROJECT_SOURCES
     src/Scenes/SceneManager.cpp
     src/Scenes/ReflexScene.cpp
     src/Scenes/ReflexScene.h
+    src/Scenes/PolygonScene.cpp
+    src/Scenes/PolygonScene.h
 )
 
 qt_add_executable(OrionSimulator
@@ -57,7 +59,10 @@ qt_add_qml_module(OrionSimulator
     VERSION 1.0
     QML_FILES src/UI/Main.qml
     SOURCES src/Scenes/ReflexScene.h src/Scenes/ReflexScene.cpp
-    RESOURCES assets/sounds/gunshot.wav
+    SOURCES src/Scenes/PolygonScene.h src/Scenes/PolygonScene.cpp
+    RESOURCES
+        assets/sounds/gunshot.wav
+        assets/images/target_classic.png
 )
 
 # Config dosyasını kopyala

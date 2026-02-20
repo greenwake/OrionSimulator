@@ -37,6 +37,7 @@ Window {
         function onTargetHit(x, y, isHit) {
             if (!isGameRunning) return;
 
+            gunshotPoolManager.playSound()
             var screenX = x * mainWindow.width
             var screenY = y * mainWindow.height
 
@@ -99,6 +100,7 @@ Window {
         function onLevelChanged(newLevel) {
             currentLevel = newLevel;
             bulletHoleModel.clear();
+            if (newLevel === 1) targetModel.clear();
         }
 
         function onRoundWinner(playerId, message) {
@@ -138,6 +140,24 @@ Window {
             // başlatmak isterseniz aşağıdaki iki satırın başındaki yorum satırını kaldırabilirsiniz:
             // sceneManager.startGame(selectedPlayerCount, selectedMode)
             // isGameRunning = true
+        }
+        // --- YENİ EKLENDİ: Hareketli hedeflerin konumunu günceller ---
+        function onTargetMoved(id, x, y) {
+            if (!isGameRunning) return;
+
+            for (var i = 0; i < targetModel.count; i++) {
+                var item = targetModel.get(i);
+                if (item.targetId === id) {
+                    // C++'tan gelen 0.0-1.0 arası konumu ekran pikseline çevir ve ortala
+                    var screenX = (x * mainWindow.width) - (item.size / 2);
+                    var screenY = (y * mainWindow.height) - (item.size / 2);
+
+                    // ListModel içindeki veriyi anlık olarak güncelle (Hareketi sağlar)
+                    targetModel.setProperty(i, "xPos", screenX);
+                    targetModel.setProperty(i, "yPos", screenY);
+                    break;
+                }
+            }
         }
     }
 
@@ -269,8 +289,8 @@ Window {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        sceneManager.startGame(selectedPlayerCount, selectedMode)
                         isGameRunning = true
+                        sceneManager.startGame(selectedPlayerCount, selectedMode)
                     }
                 }
             }
@@ -483,29 +503,63 @@ Window {
 
         Repeater {
             model: targetModel
-            delegate: Rectangle {
-                property int targetId: model.targetId // EKSİK OLAN KISIM EKLENDİ
+            delegate: Item {
+                property int targetId: model.targetId
 
-                width: model.size; height: model.size; radius: model.size / 2
+                width: model.size; height: model.size
                 x: model.xPos; y: model.yPos
-                color: model.targetColor
 
-                scale: 0.0
-                Component.onCompleted: popAnim.start()
+                // ÇÖZÜM: z değerini 150 yaptık ki 3D tünelin (z:0) üstünde kalsın!
+                z: 150
 
-                NumberAnimation on scale {
-                    id: popAnim
-                    from: 0.0; to: 1.0; duration: 300; easing.type: Easing.OutBack
+                // --- 1. REFLEKS MODU İÇİN (Renkli Balon) ---
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: model.targetColor
+                    visible: selectedMode === "Refleks"
                 }
 
+                // --- 2. POLİGON MODU İÇİN (Görsel Hedef) ---
+                Image {
+                    id: targetImg
+                    anchors.fill: parent
+                    source: selectedMode === "Poligon" ? model.targetColor : ""
+                    fillMode: Image.PreserveAspectFit
+                    visible: selectedMode === "Poligon"
+                    mipmap: true
+
+                    // Hata Ayıklama (Görsel yüklenemezse Kırmızı bir daire çiz)
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: "red"
+                        border.color: "white"
+                        border.width: 5
+                        visible: targetImg.status !== Image.Ready && selectedMode === "Poligon"
+                    }
+                }
+
+                // ÇÖZÜM 2: Daha stabil bir çıkış animasyonu
+                scale: 0.0
+                Behavior on scale {
+                    NumberAnimation { duration: 300; easing.type: Easing.OutBack }
+                }
+                Component.onCompleted: {
+                    scale = 1.0 // Öğe yaratıldığında otomatik büyüyerek çıkar
+                }
+
+                // Nefes Alma Efekti (Refleks Modunda)
                 SequentialAnimation on scale {
-                    running: !popAnim.running
+                    running: scale === 1.0 && selectedMode === "Refleks"
                     loops: Animation.Infinite
                     NumberAnimation { to: 1.1; duration: 800 }
                     NumberAnimation { to: 1.0; duration: 800 }
                 }
             }
         }
+
+
         // --- KALICI MERMİ İZLERİ (BULLET HOLES) ---
         ListModel { id: bulletHoleModel }
 
@@ -517,7 +571,7 @@ Window {
                 y: model.yPos - 6
                 width: 12
                 height: 12
-                z: 50 // Arka planın üstünde, balonların (800) altında kalsın
+                z: 200 // Arka planın üstünde, balonların (800) altında kalsın
 
                 // Yanık/Bozulma efekti (Dış Halka)
                 Rectangle {
@@ -625,7 +679,7 @@ Window {
             onClicked: (mouse) => {
                 var normX = mouse.x / width
                 var normY = mouse.y / height
-                gunshotPoolManager.playSound()
+                // gunshotPoolManager.playSound()
                 sceneManager.handleInput(normX, normY)
             }
         }

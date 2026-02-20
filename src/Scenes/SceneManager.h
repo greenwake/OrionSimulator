@@ -35,6 +35,7 @@ signals:
     void gameOver(QVariantMap reportData);
 
     void playerConfigUpdated(int playerCount, QString p1Name, QString p2Name);
+    void targetMoved(int id, float x, float y); // Hareket eden hedef için
 
 private:
     IScene *m_currentScene = nullptr;

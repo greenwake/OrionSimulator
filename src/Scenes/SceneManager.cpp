@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QPointF>
 #include "ReflexScene.h"
+#include "PolygonScene.h"
 
 SceneManager::SceneManager(QObject *parent) : QObject(parent) {}
 
@@ -37,6 +38,21 @@ void SceneManager::startGame(int playerCount, const QString &sceneType) {
         connect(m_currentScene, &IScene::roundWinner, this, &SceneManager::roundWinner);
 
         connect(m_currentScene, &IScene::gameOver, this, &SceneManager::gameOver);
+
+        m_currentScene->start();
+    }
+    else if (sceneType == "Poligon") { // YENİ EKLENEN KISIM
+        m_currentScene = new PolygonScene(m_playerCount, this);
+
+        connect(m_currentScene, &IScene::scoreUpdated, this, &SceneManager::scoreChanged);
+        connect(m_currentScene, &IScene::targetSpawned, this, &SceneManager::targetSpawned);
+        connect(m_currentScene, &IScene::targetRemoved, this, &SceneManager::targetRemoved);
+        connect(m_currentScene, &IScene::levelChanged, this, &SceneManager::levelChanged);
+        connect(m_currentScene, &IScene::roundWinner, this, &SceneManager::roundWinner);
+        connect(m_currentScene, &IScene::gameOver, this, &SceneManager::gameOver);
+
+        // Poligon'a özel hareket sinyali
+        connect(m_currentScene, &IScene::targetMoved, this, &SceneManager::targetMoved);
 
         m_currentScene->start();
     }

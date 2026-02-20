@@ -26,4 +26,5 @@ signals:
     void roundWinner(int playerId, QString message);
 
     void gameOver(QVariantMap reportData);
+    void targetMoved(int id, float x, float y); // Hareket eden hedef için
 };
