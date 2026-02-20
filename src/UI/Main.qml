@@ -238,6 +238,7 @@ Window {
                     font.pixelSize: 20
                     font.bold: true
                     horizontalAlignment: TextInput.AlignHCenter
+                    verticalAlignment: TextInput.AlignVCenter
                     background: Rectangle { color: "#202020"; border.color: "#00FF00"; border.width: 2; radius: 5 }
                 }
 
@@ -252,6 +253,7 @@ Window {
                     font.pixelSize: 20
                     font.bold: true
                     horizontalAlignment: TextInput.AlignHCenter
+                    verticalAlignment: TextInput.AlignVCenter
                     visible: selectedPlayerCount === 2
                     background: Rectangle { color: "#202020"; border.color: "cyan"; border.width: 2; radius: 5 }
                 }
@@ -286,17 +288,125 @@ Window {
     // 2. OYUN EKRANI
     // =========================================================
     Item {
-        id: gameScreen
-        anchors.fill: parent
-        visible: isGameRunning
-
-        Item {
+            id: gameScreen
             anchors.fill: parent
-            opacity: 0.3
-            Repeater { model: 20; delegate: Rectangle { x: index * (parent.width / 20); width: 1; height: parent.height; color: "#00FF00" } }
-            Repeater { model: 12; delegate: Rectangle { y: index * (parent.height / 12); width: parent.width; height: 1; color: "#00FF00" } }
+            visible: isGameRunning
+
+        //Item {
+        //    anchors.fill: parent
+        //    opacity: 0.3
+        //    Repeater { model: 20; delegate: Rectangle { x: index * (parent.width / 20); width: 1; height: parent.height; color: "#00FF00" } }
+        //    Repeater { model: 12; delegate: Rectangle { y: index * (parent.height / 12); width: parent.width; height: 1; color: "#00FF00" } }
+        //}
+
+        // --- YENİ: TEK KULLANIMLIK 3D TÜNEL BİLEŞENİ (COMPONENT) ---
+        // Bu şablonu hem 1. oyuncu hem 2. oyuncu için renk değiştirerek kullanacağız
+        Component {
+            id: cyberTunnelComponent
+            Item {
+                property string themeColor: "#00FF00"
+                anchors.fill: parent
+
+                // 1. Ufuk Noktasına Giden Çizgiler (Derinlik Yanılsaması)
+                Repeater {
+                    model: 24 // 24 adet ışın
+                    delegate: Rectangle {
+                        width: Math.max(parent.width, parent.height) * 1.5
+                        height: 2
+                        color: themeColor
+                        anchors.centerIn: parent
+                        rotation: index * (180 / 24)
+                        opacity: 0.25 // Çizgiler hafif silik
+                    }
+                }
+
+                // 2. İleriye Doğru Giden Perspektif Çerçeveleri
+                Repeater {
+                    model: 25
+                    delegate: Rectangle {
+                        anchors.centerIn: parent
+                        // Math.pow ile üstel büyüme: Merkezde sık, dışarıda geniş çerçeveler
+                        width: parent.width * Math.pow(1.22, index - 18)
+                        height: parent.height * Math.pow(1.22, index - 18)
+                        color: "transparent"
+                        border.color: themeColor
+                        // Yakındaki çerçeveler kalın ve parlak, uzaktakiler ince ve silik
+                        border.width: Math.max(1, index / 4)
+                        opacity: Math.max(0.05, index / 25)
+                    }
+                }
+
+                // 3. Merkezdeki Sonsuzluk Boşluğu (Karanlık Ufuk Noktası)
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width * 0.15
+                    height: width
+                    radius: width / 2
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "black" }
+                        GradientStop { position: 0.5; color: "black" }
+                        GradientStop { position: 1.0; color: "transparent" }
+                    }
+                }
+
+                // 4. Kenar Karartmaları (Vignette Efekti)
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#E6000000" } // Üst Karartma
+                        GradientStop { position: 0.25; color: "transparent" }
+                        GradientStop { position: 0.75; color: "transparent" }
+                        GradientStop { position: 1.0; color: "#E6000000" } // Alt Karartma
+                    }
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: "#E6000000" } // Sol Karartma
+                        GradientStop { position: 0.25; color: "transparent" }
+                        GradientStop { position: 0.75; color: "transparent" }
+                        GradientStop { position: 1.0; color: "#E6000000" } // Sağ Karartma
+                    }
+                }
+            }
         }
 
+        // --- TÜNELLERİ EKRANA YERLEŞTİRME ---
+        Row {
+            anchors.fill: parent
+            z: 0 // En arkada
+
+            // 1. OYUNCU KULVARI
+            Item {
+                width: selectedPlayerCount === 2 ? parent.width / 2 : parent.width
+                height: parent.height
+                clip: true // Taşan çizgileri kes
+
+                // Yukarıda hazırladığımız Component'i yüklüyoruz
+                Loader {
+                    anchors.fill: parent
+                    sourceComponent: cyberTunnelComponent
+                    onLoaded: item.themeColor = "#00FF00" // Yeşil renk
+                }
+            }
+
+            // 2. OYUNCU KULVARI (Sadece 2 Oyuncu Seçiliyse Görünür)
+            Item {
+                width: parent.width / 2
+                height: parent.height
+                visible: selectedPlayerCount === 2
+                clip: true
+
+                Loader {
+                    anchors.fill: parent
+                    sourceComponent: cyberTunnelComponent
+                    onLoaded: item.themeColor = "cyan" // Turkuaz renk
+                }
+            }
+        }
+
+        // --- ORTA ÇİZGİ (AYIRICI) ---
         Rectangle {
             id: middleDivider
             width: 8
